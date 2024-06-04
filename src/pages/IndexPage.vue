@@ -2,16 +2,37 @@
   <q-page class="row q-pt-xl">
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
+        <q-input v-model="searchData" label="查詢" />
         <q-input v-model="tempData.name" label="姓名" />
         <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-btn
+          v-if="isAdd"
+          color="primary"
+          class="q-mt-md"
+          @click="handleClickOption({ label: '新增', status: 'add' }, tempData)"
+          >新增</q-btn
+        >
+        <q-btn
+          v-if="!isAdd"
+          color="primary"
+          class="q-mt-md"
+          @click="
+            handleClickOption(
+              { label: '更新', status: 'update' },
+              tempData,
+              tempData.index
+            )
+          "
+        >
+          更新
+        </q-btn>
       </div>
 
       <q-table
         flat
         bordered
         ref="tableRef"
-        :rows="blockData"
+        :rows="filteredRows"
         :columns="(tableConfig as QTableProps['columns'])"
         row-key="id"
         hide-pagination
@@ -39,7 +60,7 @@
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
               <q-btn
-                @click="handleClickOption(btn, props.row)"
+                @click="handleClickOption(btn, props.row, tempData.index)"
                 v-for="(btn, index) in tableButtons"
                 :key="index"
                 size="sm"
@@ -80,7 +101,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { QTableProps } from 'quasar';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 interface btnType {
   label: string;
   icon: string;
@@ -122,9 +143,55 @@ const tableButtons = ref([
 const tempData = ref({
   name: '',
   age: '',
+  index: null,
 });
-function handleClickOption(btn, data) {
+
+const isAdd = ref(true);
+const searchData = ref('');
+
+const filteredRows = computed(() => {
+  return blockData.value.filter((row) =>
+    row.name.toLowerCase().includes(searchData.value.toLowerCase())
+  );
+});
+
+function handleClickOption(btn, data, index) {
   // ...
+  if (btn.status === 'add') {
+    blockData.value.push({
+      name: data.name,
+      age: data.age,
+    });
+
+    tempData.value.name = '';
+    tempData.value.age = '';
+    tempData.value.index = null;
+  } else if (btn.status === 'delete') {
+    index = blockData.value.findIndex(
+      (item) => item.name === data.name && item.age === data.age
+    );
+    blockData.value.splice(index, 1);
+  } else if (btn.status === 'edit') {
+    let originalIndex = blockData.value.findIndex(
+      (item) => item.name === data.name && item.age === data.age
+    );
+    tempData.value.name = data.name;
+    tempData.value.age = data.age;
+    tempData.value.index = originalIndex;
+
+    isAdd.value = false;
+  } else if (btn.status === 'update') {
+    blockData.value[index] = {
+      name: tempData.value.name,
+      age: tempData.value.age,
+    };
+
+    tempData.value.name = '';
+    tempData.value.age = '';
+    tempData.value.index = null;
+
+    isAdd.value = true;
+  }
 }
 </script>
 
