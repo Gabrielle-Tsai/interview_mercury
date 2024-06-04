@@ -3,7 +3,11 @@
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
         <q-input v-model="searchData" label="查詢" />
-        <q-input v-model="tempData.name" label="姓名" />
+        <q-input
+          v-model="tempData.name"
+          label="姓名"
+          :rules="[(val) => !!val || '請填入姓名']"
+        />
         <q-input v-model="tempData.age" label="年齡" />
         <q-btn
           v-if="isAdd"
@@ -157,6 +161,10 @@ const filteredRows = computed(() => {
 
 function handleClickOption(btn, data, index) {
   // ...
+  if (data.name === '' || data.age === '') {
+    return;
+  }
+
   if (btn.status === 'add') {
     blockData.value.push({
       name: data.name,
@@ -192,6 +200,10 @@ function handleClickOption(btn, data, index) {
 
     isAdd.value = true;
   }
+}
+
+function isNumber(string) {
+  return !isNaN(parseInt(string) && isFinite(Number(string)));
 }
 </script>
 
